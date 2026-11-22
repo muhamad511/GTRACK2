@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090d16" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Home Inventory" />
+  <link id="pwaManifestLink" rel="manifest" href="" />
+  <link id="pwaFavicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/muhamad511/GTRACK2/main/icon-192.png" />
+  <link id="pwaAppleIcon" rel="apple-touch-icon" href="https://raw.githubusercontent.com/muhamad511/GTRACK2/main/icon-192.png" />
+  <title>Home Inventory • Inventori Rumah</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Konfigurasi Tailwind CSS untuk mod gelap dan fon Inter
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* Tema Kaca Gelap Moden (#090d16) dengan Aksen Emerald & Amber */
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #090d16;
+      background-image:
+        radial-gradient(circle at 12% 8%, rgba(16, 185, 129, 0.14), transparent 36%),
+        radial-gradient(circle at 88% 12%, rgba(245, 158, 11, 0.12), transparent 38%),
+        radial-gradient(circle at 50% 95%, rgba(16, 185, 129, 0.07), transparent 45%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .glass-panel {
+      background: rgba(15, 22, 36, 0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.65);
+    }
+
+    .glass-card {
+      background: rgba(19, 28, 46, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+      background: rgba(24, 35, 58, 0.88);
+    }
+
+    /* Bar navigasi terapung berbentuk gelembung kaca (Floating Glass Bubble Dock) */
+    .floating-bubble-dock {
+      background: rgba(13, 21, 38, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow:
+        0 20px 44px -10px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(16, 185, 129, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    @keyframes toastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .toast-animate {
+      animation: toastSlideIn 0.22s ease forwards;
+    }
+  </style>
+</head>
+<body class="text-slate-100 antialiased selection:bg-emerald-400/25 selection:text-emerald-200">
+  <!-- ===================================================================== -->
+  <!-- BEKAS NOTIFIKASI TOAST                                                -->
+  <!-- ===================================================================== -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[95] flex flex-col gap-2 max-w-sm w-[calc(100vw-2rem)] pointer-events-none"></div>
+
+  <!-- ===================================================================== -->
+  <!-- KERANGKA UTAMA APLIKASI (100% LOCALSTORAGE, TANPA LOGIN)              -->
+  <!-- ===================================================================== -->
+  <div id="appShell" class="min-h-screen flex flex-col pb-32">
+    <!-- Pengepala Minimalis Melekit (Sticky Glass Header) -->
+    <header class="sticky top-0 z-30 glass-panel border-b border-white/[0.08]">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <!-- Logo & Jenama Aplikasi -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-400/35 flex items-center justify-center text-emerald-300 shrink-0 shadow-inner overflow-hidden">
+            <img
+              id="headerBrandLogo"
+              src="https://raw.githubusercontent.com/muhamad511/GTRACK2/main/icon-192.png"
+              alt="Logo Home Inventory"
+              class="w-8 h-8 rounded-xl object-contain"
+            />
+            <svg id="headerBrandFallbackIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5M5 9.5V19a1 1 0 001 1h12a1 1 0 001-1V9.5M9.5 20v-6h5v6" />
+            </svg>
+          </div>
+
+          <div class="min-w-0">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white truncate">Home Inventory</h1>
+            <p class="text-[11px] text-slate-400 truncate">Inventori rumah luar talian</p>
+          </div>
+        </div>
+
+        <!-- Butang Tunggal Pengurusan Data -->
+        <div class="flex items-center shrink-0">
+          <button
+            id="openDataModalBtn"
+            type="button"
+            aria-label="Pengurusan Data"
+            title="Pengurusan Data (Eksport & Import JSON)"
+            class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/[0.13] border border-white/15 flex items-center justify-center text-slate-200 transition cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Kandungan Utama 4 Paparan -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-5 space-y-6">
+      <!-- ================================================================= -->
+      <!-- PAPARAN 1: UTAMA (3 KAD METRIK & RINGKASAN MENGIKUT KATEGORI)     -->
+      <!-- ================================================================= -->
+      <section id="view-utama" class="app-view space-y-5">
+        <!-- 3 Kad Metrik Ringkasan Atas (Jumlah Barang, Stok Cukup, Perlu Beli) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <button
+            type="button"
+            data-nav-target="senarai"
+            data-preset-status="ALL"
+            class="glass-card rounded-2xl p-4 text-left cursor-pointer group"
+          >
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span>Jumlah Barang</span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold">Semua</span>
+            </div>
+            <div id="metricTotalItems" class="text-2xl sm:text-3xl font-bold text-white group-hover:text-emerald-300 transition">0</div>
+            <p class="text-[11px] text-slate-400 mt-1">Barang berdaftar</p>
+          </button>
+
+          <button
+            type="button"
+            data-nav-target="senarai"
+            data-preset-status="OK"
+            class="glass-card rounded-2xl p-4 text-left cursor-pointer group"
+          >
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span>Stok Cukup</span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 text-[10px] font-semibold">Cukup</span>
+            </div>
+            <div id="metricInStock" class="text-2xl sm:text-3xl font-bold text-emerald-300 group-hover:text-emerald-200 transition">0</div>
+            <p class="text-[11px] text-slate-400 mt-1">Baki melebihi stok minimum</p>
+          </button>
+
+          <button
+            type="button"
+            data-nav-target="senarai"
+            data-preset-status="BUY"
+            class="glass-card rounded-2xl p-4 text-left cursor-pointer group"
+          >
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span>Perlu Beli</span>
+              <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-semibold">Perlu Beli</span>
+            </div>
+            <div id="metricNeedBuy" class="text-2xl sm:text-3xl font-bold text-amber-300 group-hover:text-amber-200 transition">0</div>
+            <p class="text-[11px] text-slate-400 mt-1">Baki pada atau bawah minimum</p>
+          </button>
+        </div>
+
+        <!-- Grid Ringkasan 11 Kategori Tetap -->
+        <div class="glass-panel rounded-2xl p-4 sm:p-5 space-y-3.5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-white">Ringkasan Mengikut Kategori</h2>
+              <p class="text-xs text-slate-400">Ketik mana-mana kategori untuk menapis senarai inventori</p>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">11 Kategori</span>
+          </div>
+          <div id="utamaCategoryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- PAPARAN 2: SENARAI (CARIAN, PENAPIS & PENGURUSAN STOK)            -->
+      <!-- ================================================================= -->
+      <section id="view-senarai" class="app-view hidden space-y-4">
+        <div class="glass-panel rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-bold text-white">Senarai Inventori</h2>
+              <p id="senaraiSubtitle" class="text-xs text-slate-400">Memaparkan semua barangan inventori</p>
+            </div>
+
+            <div class="w-full sm:w-56">
+              <label for="senaraiCategorySelect" class="sr-only">Pilih Kategori</label>
+              <select
+                id="senaraiCategorySelect"
+                class="w-full px-3.5 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-400/60"
+              ></select>
+            </div>
+          </div>
+
+          <!-- Input Carian dengan Butang Kosongkan -->
+          <div class="relative">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              id="senaraiSearchInput"
+              type="text"
+              placeholder="Cari nama barang, unit atau catatan..."
+              class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400/60"
+            />
+            <button
+              id="clearSearchBtn"
+              type="button"
+              aria-label="Kosongkan carian"
+              class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-slate-300 cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Cip Status (Semua / Cukup / Perlu Beli) -->
+          <div id="senaraiStatusPills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5"></div>
+
+          <!-- Cip 11 Kategori -->
+          <div id="senaraiCategoryPills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5"></div>
+        </div>
+
+        <!-- Bekas Senarai Berkelompok Mengikut Kategori -->
+        <div id="senaraiGroupedContainer" class="space-y-5"></div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- PAPARAN 3: BELI (SENARAI BELIAN AUTOMATIK BARANG PERLU BELI)      -->
+      <!-- ================================================================= -->
+      <section id="view-beli" class="app-view hidden space-y-4">
+        <div class="glass-panel rounded-2xl p-4 sm:p-5 space-y-3.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-bold text-white">Senarai Perlu Dibeli</h2>
+              <p id="beliSummaryText" class="text-xs text-slate-400">Barangan berstatus Perlu Beli (baki stok pada atau bawah minimum)</p>
+            </div>
+
+            <button
+              id="markAllBoughtBtn"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:pointer-events-none text-slate-950 text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0"
+            >
+              Selesai Semua Pembelian
+            </button>
+          </div>
+
+          <!-- Cip Penapis Kategori Dalam Senarai Beli -->
+          <div id="beliCategoryPills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+        </div>
+
+        <!-- Bekas Senarai Beli -->
+        <div id="beliGroupedContainer" class="space-y-5"></div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- PAPARAN 4: TAMBAH (BORANG TAMBAH BARANG BAHARU)                   -->
+      <!-- ================================================================= -->
+      <section id="view-tambah" class="app-view hidden space-y-5">
+        <div class="glass-panel rounded-2xl p-5 sm:p-6">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Tambah Barang Inventori</h2>
+            <p class="text-xs text-slate-400">Isi maklumat barang baharu untuk disimpan ke storan tempatan</p>
+          </div>
+
+          <form id="addItemForm" class="space-y-4">
+            <div>
+              <label for="tambahName" class="block text-xs font-medium text-slate-300 mb-1.5">Nama Barang *</label>
+              <input
+                id="tambahName"
+                type="text"
+                required
+                placeholder="Contoh: Beras Wangi 5kg"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400/60"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="tambahCategory" class="block text-xs font-medium text-slate-300 mb-1.5">Kategori *</label>
+                <select
+                  id="tambahCategory"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+                ></select>
+              </div>
+
+              <div>
+                <label for="tambahUnit" class="block text-xs font-medium text-slate-300 mb-1.5">Unit Sukatan</label>
+                <input
+                  id="tambahUnit"
+                  type="text"
+                  placeholder="Contoh: pek, botol, tin, kg..."
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400/60"
+                />
+              </div>
+            </div>
+
+            <!-- Cip Pantas Unit Sukatan -->
+            <div>
+              <span class="block text-[11px] font-medium text-slate-400 mb-1.5">Pilihan Pantas Unit Sukatan:</span>
+              <div id="unitQuickChips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="tambahStokSemasa" class="block text-xs font-medium text-slate-300 mb-1.5">Baki Stok Semasa</label>
+                <input
+                  id="tambahStokSemasa"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="1"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+                />
+              </div>
+
+              <div>
+                <label for="tambahParasMin" class="block text-xs font-medium text-slate-300 mb-1.5">Stok Minimum</label>
+                <input
+                  id="tambahParasMin"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="1"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="tambahNotes" class="block text-xs font-medium text-slate-300 mb-1.5">Catatan (Pilihan)</label>
+              <input
+                id="tambahNotes"
+                type="text"
+                placeholder="Contoh: Jenama pilihan, rak dapur atas..."
+                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400/60"
+              />
+            </div>
+
+            <button
+              type="submit"
+              class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition cursor-pointer"
+            >
+              Simpan ke Inventori
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- FLOATING GLASS BUBBLE BOTTOM NAVIGATION DOCK (4 TAB UTAMA)            -->
+    <!-- ===================================================================== -->
+    <nav
+      aria-label="Navigasi Utama"
+      class="fixed bottom-4 sm:bottom-5 inset-x-0 z-30 px-3 sm:px-4 pointer-events-none flex justify-center"
+    >
+      <div class="floating-bubble-dock pointer-events-auto w-full max-w-md rounded-full p-1.5 grid grid-cols-4 gap-1.5">
+        <button
+          type="button"
+          data-nav-target="utama"
+          class="nav-tab flex flex-col items-center justify-center py-2 px-2 rounded-full text-xs font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-400/35 shadow-sm transition-all duration-200 cursor-pointer relative"
+        >
+          <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>Utama</span>
+        </button>
+
+        <button
+          type="button"
+          data-nav-target="senarai"
+          class="nav-tab flex flex-col items-center justify-center py-2 px-2 rounded-full text-xs font-medium text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] border border-transparent transition-all duration-200 cursor-pointer relative"
+        >
+          <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <span>Senarai</span>
+        </button>
+
+        <button
+          type="button"
+          data-nav-target="beli"
+          class="nav-tab flex flex-col items-center justify-center py-2 px-2 rounded-full text-xs font-medium text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] border border-transparent transition-all duration-200 cursor-pointer relative"
+        >
+          <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span>Beli</span>
+          <span
+            id="navBeliBadge"
+            class="hidden absolute top-1 right-2.5 sm:right-3.5 min-w-[1.25rem] h-4 px-1 flex items-center justify-center rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold shadow-md ring-2 ring-[#0d1526]"
+          >0</span>
+        </button>
+
+        <button
+          type="button"
+          data-nav-target="tambah"
+          class="nav-tab flex flex-col items-center justify-center py-2 px-2 rounded-full text-xs font-medium text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] border border-transparent transition-all duration-200 cursor-pointer relative"
+        >
+          <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Tambah</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: PENGURUSAN DATA (EKSPORT & IMPORT SANDARAN JSON)               -->
+  <!-- ===================================================================== -->
+  <div id="dataModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl w-full max-w-md p-6 space-y-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">Pengurusan Data</h2>
+          <p class="text-xs text-slate-400">Eksport & import fail sandaran JSON tempatan</p>
+        </div>
+        <button
+          id="closeDataModalBtn"
+          type="button"
+          aria-label="Tutup pengurusan data"
+          class="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-slate-300 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Ringkasan Storan Pelayar -->
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-white/[0.08] flex items-center justify-between text-xs">
+        <span class="text-slate-400">Jumlah Rekod Tersimpan</span>
+        <span id="dataModalItemCount" class="font-bold text-emerald-300">0 item</span>
+      </div>
+
+      <!-- Mod Import JSON -->
+      <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-white/[0.08] space-y-2">
+        <span class="block text-xs font-semibold text-slate-200">Mod Import Sandaran JSON</span>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-200 cursor-pointer">
+            <input type="radio" name="importMode" value="merge" checked class="accent-emerald-500" />
+            <span>Gabung & Kemaskini</span>
+          </label>
+          <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-200 cursor-pointer">
+            <input type="radio" name="importMode" value="replace" class="accent-amber-500" />
+            <span>Ganti Semua Data</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Butang Eksport & Import JSON -->
+      <div class="space-y-2.5">
+        <button
+          id="exportJsonBtn"
+          type="button"
+          class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Eksport Sandaran JSON</span>
+        </button>
+
+        <label
+          for="importJsonInput"
+          class="w-full py-2.5 px-4 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 text-amber-200 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span>Import Sandaran JSON</span>
+        </label>
+        <input id="importJsonInput" type="file" accept="application/json,.json" class="hidden" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: SUNTING BARANG                                                 -->
+  <!-- ===================================================================== -->
+  <div id="editModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl w-full max-w-md p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-white">Sunting Barang</h2>
+        <button
+          id="closeEditModalBtn"
+          type="button"
+          aria-label="Tutup modal sunting"
+          class="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-slate-300 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="editItemForm" class="space-y-3.5">
+        <input id="editItemId" type="hidden" />
+
+        <div>
+          <label for="editItemName" class="block text-xs font-medium text-slate-300 mb-1">Nama Barang *</label>
+          <input
+            id="editItemName"
+            type="text"
+            required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="editItemCategory" class="block text-xs font-medium text-slate-300 mb-1">Kategori</label>
+            <select
+              id="editItemCategory"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+            ></select>
+          </div>
+          <div>
+            <label for="editItemUnit" class="block text-xs font-medium text-slate-300 mb-1">Unit Sukatan</label>
+            <input
+              id="editItemUnit"
+              type="text"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="editItemStok" class="block text-xs font-medium text-slate-300 mb-1">Baki Stok Semasa</label>
+            <input
+              id="editItemStok"
+              type="number"
+              min="0"
+              step="1"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+            />
+          </div>
+          <div>
+            <label for="editItemMin" class="block text-xs font-medium text-slate-300 mb-1">Stok Minimum</label>
+            <input
+              id="editItemMin"
+              type="number"
+              min="0"
+              step="1"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="editItemNotes" class="block text-xs font-medium text-slate-300 mb-1">Catatan (Pilihan)</label>
+          <input
+            id="editItemNotes"
+            type="text"
+            placeholder="Catatan tambahan..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+          />
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-2">
+          <button
+            id="cancelEditBtn"
+            type="button"
+            class="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-slate-300 cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold cursor-pointer"
+          >
+            Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: PENGESAHAN PADAM BARANG                                        -->
+  <!-- ===================================================================== -->
+  <div id="deleteModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl w-full max-w-sm p-6 space-y-4">
+      <h2 class="text-lg font-bold text-white">Padam Barang?</h2>
+      <p id="deleteModalMessage" class="text-xs sm:text-sm text-slate-300">
+        Adakah anda pasti mahu memadam barang ini daripada inventori?
+      </p>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button
+          id="cancelDeleteBtn"
+          type="button"
+          class="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-slate-300 cursor-pointer"
+        >
+          Batal
+        </button>
+        <button
+          id="confirmDeleteBtn"
+          type="button"
+          class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-semibold cursor-pointer"
+        >
+          Ya, Padam
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- LOGIK APLIKASI (100% LOCALSTORAGE + PWA BOLEH DIPASANG)               -->
+  <!-- ===================================================================== -->
+  <script>
+    (() => {
+      'use strict';
+
+      // ---------------------------------------------------------------------
+      // 1. KUNCI LOCALSTORAGE, URL LOGO PWA & 11 KATEGORI TETAP
+      // ---------------------------------------------------------------------
+      const STORAGE_ITEMS_KEY = 'home_inventory_local_items_v1';
+      const STORAGE_SEEDED_KEY = 'home_inventory_local_seeded_v1';
+      const PRIMARY_LOGO_URL = 'https://raw.githubusercontent.com/muhamad511/GTRACK2/main/icon-192.png';
+      const LOCAL_ICON_FALLBACK_URL = './Icon-192.png';
+
+      const FIXED_CATEGORIES = [
+        'Makanan Asas & Kering',
+        'Protein & Segar',
+        'Sayur & Buah',
+        'Tenusu, Telur & Sejuk Beku',
+        'Perencah, Sos & Minyak',
+        'Minuman & Sarapan',
+        'Snek & Makanan Ringan',
+        'Penjagaan Diri & Mandian',
+        'Pencucian & Penjagaan Rumah',
+        'Kesihatan & Ubat-ubatan',
+        'Barangan Dapur & Pakai Buang',
+      ];
+
+      const CATEGORY_META = {
+        'Makanan Asas & Kering': {
+          badgeBg: 'bg-amber-500/15 border-amber-400/30 text-amber-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
+        },
+        'Protein & Segar': {
+          badgeBg: 'bg-rose-500/15 border-rose-400/30 text-rose-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6c3.866 0 7 2.239 7 5s-3.134 5-7 5-7-2.239-7-5 3.134-5 7-5zm0 0V3m-4 14l-1 4m9-4l1 4"/></svg>',
+        },
+        'Sayur & Buah': {
+          badgeBg: 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-4.97 0-9-4.03-9-9 0-3.866 3.134-7 7-7 4.97 0 9 4.03 9 9 0 3.866-3.134 7-7 7zm0 0c0-4.5 2.5-8 7-9"/></svg>',
+        },
+        'Tenusu, Telur & Sejuk Beku': {
+          badgeBg: 'bg-sky-500/15 border-sky-400/30 text-sky-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-6-6l6 6 6-6M5 9l7-6 7 6"/></svg>',
+        },
+        'Perencah, Sos & Minyak': {
+          badgeBg: 'bg-orange-500/15 border-orange-400/30 text-orange-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6m-5 0v3l-2 3v10a2 2 0 002 2h4a2 2 0 002-2V9l-2-3V3"/></svg>',
+        },
+        'Minuman & Sarapan': {
+          badgeBg: 'bg-teal-500/15 border-teal-400/30 text-teal-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8h1a3 3 0 010 6h-1M5 8h13v7a4 4 0 01-4 4H9a4 4 0 01-4-4V8zm3-4h6"/></svg>',
+        },
+        'Snek & Makanan Ringan': {
+          badgeBg: 'bg-yellow-500/15 border-yellow-400/30 text-yellow-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l2.4 4.86L20 8.64l-4 3.9.94 5.5L12 15.4l-4.94 2.64.94-5.5-4-3.9 5.6-.78L12 3z"/></svg>',
+        },
+        'Penjagaan Diri & Mandian': {
+          badgeBg: 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.5 3.5 5 6.5 5 10a5 5 0 01-10 0c0-3.5 2.5-6.5 5-10z"/></svg>',
+        },
+        'Pencucian & Penjagaan Rumah': {
+          badgeBg: 'bg-indigo-500/15 border-indigo-400/30 text-indigo-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>',
+        },
+        'Kesihatan & Ubat-ubatan': {
+          badgeBg: 'bg-red-500/15 border-red-400/30 text-red-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m-4-4h8M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg>',
+        },
+        'Barangan Dapur & Pakai Buang': {
+          badgeBg: 'bg-violet-500/15 border-violet-400/30 text-violet-300',
+          bar: 'bg-emerald-400',
+          icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
+        },
+      };
+
+      const QUICK_UNITS = ['pek', 'botol', 'tin', 'kg', 'kotak', 'biji', 'papan', 'gulung', 'tiub'];
+      const FIXED_CATEGORY_SET = new Set(FIXED_CATEGORIES);
+
+      function normalizeCategory(raw) {
+        const val = String(raw || '').trim();
+        if (FIXED_CATEGORY_SET.has(val)) return val;
+
+        const lower = val.toLowerCase();
+        for (const cat of FIXED_CATEGORIES) {
+          const catLower = cat.toLowerCase();
+          if (lower === catLower || lower.includes(catLower) || catLower.includes(lower)) {
+            return cat;
+          }
+        }
+        if (lower.includes('beras') || lower.includes('kering') || lower.includes('asas')) return 'Makanan Asas & Kering';
+        if (lower.includes('protein') || lower.includes('ayam') || lower.includes('ikan')) return 'Protein & Segar';
+        if (lower.includes('sayur') || lower.includes('buah')) return 'Sayur & Buah';
+        if (lower.includes('tenusu') || lower.includes('telur') || lower.includes('sejuk')) return 'Tenusu, Telur & Sejuk Beku';
+        if (lower.includes('sos') || lower.includes('minyak') || lower.includes('perencah')) return 'Perencah, Sos & Minyak';
+        if (lower.includes('minuman') || lower.includes('sarapan')) return 'Minuman & Sarapan';
+        if (lower.includes('snek') || lower.includes('biskut')) return 'Snek & Makanan Ringan';
+        if (lower.includes('diri') || lower.includes('mandian')) return 'Penjagaan Diri & Mandian';
+        if (lower.includes('cuci') || lower.includes('dobi')) return 'Pencucian & Penjagaan Rumah';
+        if (lower.includes('ubat') || lower.includes('kesihatan')) return 'Kesihatan & Ubat-ubatan';
+        return 'Barangan Dapur & Pakai Buang';
+      }
+
+      // ---------------------------------------------------------------------
+      // 2. KATALOG PERMULAAN 99 BARANGAN RUMAH MALAYSIA (9 ITEM / KATEGORI)
+      // Format: [name, category, stock, min_stock, unit, notes]
+      // ---------------------------------------------------------------------
+      const STARTER_CATALOG_99 = [
+        // 1. Makanan Asas & Kering (9)
+        ['Beras Putih Tempatan / Import 10kg', 'Makanan Asas & Kering', 1, 1, 'kampit', 'Simpan dalam bekas kedap udara'],
+        ['Beras Wangi Jasmine 5kg', 'Makanan Asas & Kering', 1, 1, 'kampit', 'Untuk masakan harian'],
+        ['Tepung Gandum Serbaguna 1kg', 'Makanan Asas & Kering', 2, 1, 'pek', 'Kegunaan kuih & gorengan'],
+        ['Bihun Kering', 'Makanan Asas & Kering', 2, 1, 'bungkus', 'Kabinet kering'],
+        ['Spaghetti / Pasta', 'Makanan Asas & Kering', 1, 1, 'bungkus', ''],
+        ['Mee Segera (Pek 5 Bungkus)', 'Makanan Asas & Kering', 2, 1, 'pek', 'Stok kecemasan'],
+        ['Gula Pasir Putih 1kg', 'Makanan Asas & Kering', 2, 1, 'pek', ''],
+        ['Garam Halus / Garam Bukit', 'Makanan Asas & Kering', 1, 1, 'pek', ''],
+        ['Bawang Goreng & Ikan Bilis Kering', 'Makanan Asas & Kering', 1, 1, 'pek', ''],
+
+        // 2. Protein & Segar (9)
+        ['Ayam Segar Potong', 'Protein & Segar', 2, 1, 'ekor', 'Bahagian campur'],
+        ['Daging Lembu Segar', 'Protein & Segar', 1, 1, 'kg', ''],
+        ['Ikan Kembung / Selar', 'Protein & Segar', 2, 1, 'kg', ''],
+        ['Ikan Siakap / Bawal', 'Protein & Segar', 1, 1, 'ekor', ''],
+        ['Udang Segar Sederhana', 'Protein & Segar', 1, 1, 'pek', ''],
+        ['Sotong Segar', 'Protein & Segar', 0, 1, 'pek', 'Perlu dibeli hujung minggu'],
+        ['Tempe Segar', 'Protein & Segar', 2, 1, 'pek', ''],
+        ['Tauhu Putih / Tauhu Telur', 'Protein & Segar', 2, 1, 'pek', ''],
+        ['Isi Ayam Tanpa Tulang (Dada)', 'Protein & Segar', 1, 1, 'pek', ''],
+
+        // 3. Sayur & Buah (9)
+        ['Bawang Merah & Bawang Besar', 'Sayur & Buah', 2, 1, 'kg', 'Rak pengudaraan baik'],
+        ['Bawang Putih', 'Sayur & Buah', 1, 1, 'pek', ''],
+        ['Halia, Lengkuas & Serai', 'Sayur & Buah', 1, 1, 'pek', ''],
+        ['Cili Padi & Cili Merah', 'Sayur & Buah', 1, 1, 'pek', ''],
+        ['Sayur Hijau (Sawi / Bayam / Kailan)', 'Sayur & Buah', 2, 1, 'ikat', ''],
+        ['Kentang & Lobak Merah', 'Sayur & Buah', 1, 1, 'pek', ''],
+        ['Tomato & Timun', 'Sayur & Buah', 1, 1, 'pek', ''],
+        ['Pisang Berangan / Cavendish', 'Sayur & Buah', 1, 1, 'sikat', ''],
+        ['Epal Merah / Oren Valencia', 'Sayur & Buah', 4, 2, 'biji', ''],
+
+        // 4. Tenusu, Telur & Sejuk Beku (9)
+        ['Telur Ayam Gred A (30 Biji)', 'Tenusu, Telur & Sejuk Beku', 1, 1, 'papan', 'Semak tarikh luput'],
+        ['Susu Segar / UHT Full Cream 1L', 'Tenusu, Telur & Sejuk Beku', 2, 1, 'kotak', ''],
+        ['Susu Pekat Manis', 'Tenusu, Telur & Sejuk Beku', 2, 1, 'tin', ''],
+        ['Susu Cair Sejat', 'Tenusu, Telur & Sejuk Beku', 1, 1, 'tin', ''],
+        ['Santan Kotak 200ml', 'Tenusu, Telur & Sejuk Beku', 3, 2, 'kotak', ''],
+        ['Mentega (Butter) & Keju Keping', 'Tenusu, Telur & Sejuk Beku', 1, 1, 'pek', ''],
+        ['Nugget Ayam Sejuk Beku', 'Tenusu, Telur & Sejuk Beku', 1, 1, 'pek', 'Ruang sejuk beku'],
+        ['Sosej Ayam / Daging Sejuk Beku', 'Tenusu, Telur & Sejuk Beku', 1, 1, 'pek', ''],
+        ['Roti Canai / Paratha Segera', 'Tenusu, Telur & Sejuk Beku', 1, 1, 'pek', ''],
+
+        // 5. Perencah, Sos & Minyak (9)
+        ['Minyak Masak Sawit 5kg', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Kicap Lemak Manis', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Kicap Masin', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Sos Tiram', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Sos Cili', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Sos Tomato', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Cuka Masakan', 'Perencah, Sos & Minyak', 1, 1, 'botol', ''],
+        ['Serbuk Kari Ayam & Ikan', 'Perencah, Sos & Minyak', 2, 1, 'pek', ''],
+        ['Kiub Pati Ayam / Ikan Bilis', 'Perencah, Sos & Minyak', 1, 1, 'kotak', ''],
+
+        // 6. Minuman & Sarapan (9)
+        ['Serbuk Kopi / Kopi 3-dalam-1', 'Minuman & Sarapan', 1, 1, 'pek', ''],
+        ['Uncang Teh Tarik / Teh Hitam', 'Minuman & Sarapan', 1, 1, 'kotak', ''],
+        ['Minuman Malt Coklat (Milo / Vico)', 'Minuman & Sarapan', 1, 1, 'pek', ''],
+        ['Air Mineral 1.5L (Karton)', 'Minuman & Sarapan', 1, 1, 'kotak', ''],
+        ['Kordial Sirap Ros / Oren', 'Minuman & Sarapan', 1, 1, 'botol', ''],
+        ['Roti Putih / Wholemeal', 'Minuman & Sarapan', 1, 1, 'buku', ''],
+        ['Kaya & Mentega Kacang', 'Minuman & Sarapan', 1, 1, 'balang', ''],
+        ['Oat Segera', 'Minuman & Sarapan', 1, 1, 'pek', ''],
+        ['Bijirin Sarapan (Cornflakes)', 'Minuman & Sarapan', 1, 1, 'kotak', ''],
+
+        // 7. Snek & Makanan Ringan (9)
+        ['Biskut Cream Cracker', 'Snek & Makanan Ringan', 2, 1, 'pek', ''],
+        ['Biskut Coklat / Marie', 'Snek & Makanan Ringan', 1, 1, 'pek', ''],
+        ['Kerepek Ubi / Pisang', 'Snek & Makanan Ringan', 1, 1, 'pek', ''],
+        ['Kacang Tanah / Gajus Panggang', 'Snek & Makanan Ringan', 1, 1, 'pek', ''],
+        ['Sardin Dalam Tin Besar', 'Snek & Makanan Ringan', 2, 1, 'tin', ''],
+        ['Tuna Dalam Tin (Cili / Mayonis)', 'Snek & Makanan Ringan', 2, 1, 'tin', ''],
+        ['Jagung Manis Dalam Tin', 'Snek & Makanan Ringan', 1, 1, 'tin', ''],
+        ['Kacang Panggang (Baked Beans)', 'Snek & Makanan Ringan', 1, 1, 'tin', ''],
+        ['Kurma / Kismis', 'Snek & Makanan Ringan', 1, 1, 'kotak', ''],
+
+        // 8. Penjagaan Diri & Mandian (9)
+        ['Ubat Gigi Berfluorida', 'Penjagaan Diri & Mandian', 2, 1, 'tiub', ''],
+        ['Berus Gigi Dewasa / Kanak-kanak', 'Penjagaan Diri & Mandian', 2, 1, 'batang', ''],
+        ['Sabun Mandi Cecair (Body Wash)', 'Penjagaan Diri & Mandian', 1, 1, 'botol', ''],
+        ['Syampu Rambut', 'Penjagaan Diri & Mandian', 1, 1, 'botol', ''],
+        ['Perapi Rambut (Conditioner)', 'Penjagaan Diri & Mandian', 1, 1, 'botol', ''],
+        ['Pencuci Muka', 'Penjagaan Diri & Mandian', 1, 1, 'tiub', ''],
+        ['Deodoran Roll-On / Spray', 'Penjagaan Diri & Mandian', 1, 1, 'botol', ''],
+        ['Tuala Wanita / Pantyliner', 'Penjagaan Diri & Mandian', 2, 1, 'pek', ''],
+        ['Tisu Tandas Gulung (10 Gulung)', 'Penjagaan Diri & Mandian', 1, 1, 'pek', ''],
+
+        // 9. Pencucian & Penjagaan Rumah (9)
+        ['Sabun Basuh Baju Cecair 3kg', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Pelembut Fabrik (Softener)', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Sabun Pencuci Pinggan Mangkuk', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Pencuci Lantai Serbaguna', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Pencuci Mangkuk Tandas', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Peluntur Pakaian (Bleach)', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Semburan Pencuci Kaca & Dapur', 'Pencucian & Penjagaan Rumah', 1, 1, 'botol', ''],
+        ['Penyembur Serangga / Ubat Nyamuk', 'Pencucian & Penjagaan Rumah', 1, 1, 'tin', ''],
+        ['Pewangi Udara Bilik / Tandas', 'Pencucian & Penjagaan Rumah', 1, 1, 'kotak', ''],
+
+        // 10. Kesihatan & Ubat-ubatan (9)
+        ['Paracetamol 500mg (Ubat Demam)', 'Kesihatan & Ubat-ubatan', 1, 1, 'kotak', 'Peti pertolongan cemas'],
+        ['Ubat Batuk & Sakit Tekak', 'Kesihatan & Ubat-ubatan', 1, 1, 'botol', ''],
+        ['Ubat Selesema & Antihistamin', 'Kesihatan & Ubat-ubatan', 1, 1, 'kotak', ''],
+        ['Plester Luka Pelbagai Saiz', 'Kesihatan & Ubat-ubatan', 1, 1, 'kotak', ''],
+        ['Cecair Antiseptik Luka', 'Kesihatan & Ubat-ubatan', 1, 1, 'botol', ''],
+        ['Minyak Angin / Balm Lenguh Otot', 'Kesihatan & Ubat-ubatan', 1, 1, 'botol', ''],
+        ['Garam Rehidrasi Oral (ORS)', 'Kesihatan & Ubat-ubatan', 4, 2, 'pek', ''],
+        ['Vitamin C & Suplemen Harian', 'Kesihatan & Ubat-ubatan', 1, 1, 'botol', ''],
+        ['Pelitup Muka & Hand Sanitizer', 'Kesihatan & Ubat-ubatan', 1, 1, 'kotak', ''],
+
+        // 11. Barangan Dapur & Pakai Buang (9)
+        ['Plastik Sampah Hitam / Wangi', 'Barangan Dapur & Pakai Buang', 2, 1, 'gulung', 'Saiz M & L'],
+        ['Tisu Dapur (Kitchen Towel)', 'Barangan Dapur & Pakai Buang', 2, 1, 'gulung', ''],
+        ['Tisu Muka Kotak', 'Barangan Dapur & Pakai Buang', 2, 1, 'kotak', ''],
+        ['Aluminium Foil', 'Barangan Dapur & Pakai Buang', 1, 1, 'gulung', ''],
+        ['Plastik Pembalut Makanan (Cling Wrap)', 'Barangan Dapur & Pakai Buang', 1, 1, 'gulung', ''],
+        ['Beg Plastik Simpanan (Ziplock)', 'Barangan Dapur & Pakai Buang', 1, 1, 'kotak', ''],
+        ['Span Cuci Pinggan & Berus Sental', 'Barangan Dapur & Pakai Buang', 2, 1, 'pek', ''],
+        ['Kain Lap Microfiber Dapur', 'Barangan Dapur & Pakai Buang', 2, 1, 'pek', ''],
+        ['Bateri AA & AAA Simpanan', 'Barangan Dapur & Pakai Buang', 1, 1, 'pek', ''],
+      ];
+
+      // ---------------------------------------------------------------------
+      // 3. PWA MANIFEST, IKON FALLBACK & SERVICE WORKER LUAR TALIAN
+      // ---------------------------------------------------------------------
+      let manifestBlobUrl = null;
+      let fallbackIconBlobUrl = null;
+
+      function createCanvasFallbackIconUrl() {
+        if (fallbackIconBlobUrl) return fallbackIconBlobUrl;
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 192;
+          canvas.height = 192;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return PRIMARY_LOGO_URL;
+
+          ctx.fillStyle = '#090d16';
+          ctx.beginPath();
+          ctx.roundRect(0, 0, 192, 192, 42);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(16, 185, 129, 0.45)';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.roundRect(10, 10, 172, 172, 34);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#34d399';
+          ctx.lineWidth = 10;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(46, 98);
+          ctx.lineTo(96, 54);
+          ctx.lineTo(146, 98);
+          ctx.moveTo(62, 86);
+          ctx.lineTo(62, 142);
+          ctx.lineTo(130, 142);
+          ctx.lineTo(130, 86);
+          ctx.stroke();
+
+          fallbackIconBlobUrl = canvas.toDataURL('image/png');
+          return fallbackIconBlobUrl;
+        } catch (_err) {
+          return PRIMARY_LOGO_URL;
+        }
+      }
+
+      function attachImageFallbackChain(imgEl) {
+        if (!imgEl) return;
+        let stage = 0;
+        const canvasFallback = createCanvasFallbackIconUrl();
+
+        imgEl.addEventListener('error', () => {
+          stage += 1;
+          if (stage === 1) {
+            imgEl.src = LOCAL_ICON_FALLBACK_URL;
+          } else if (stage === 2) {
+            imgEl.src = canvasFallback;
+          } else {
+            imgEl.style.display = 'none';
+            document.getElementById('headerBrandFallbackIcon')?.classList.remove('hidden');
+          }
+        });
+      }
+
+      function attachLinkFallbackChain(linkEl) {
+        if (!linkEl) return;
+        const canvasFallback = createCanvasFallbackIconUrl();
+        const probe = new Image();
+        probe.onload = () => {
+          linkEl.setAttribute('href', PRIMARY_LOGO_URL);
+        };
+        probe.onerror = () => {
+          const localProbe = new Image();
+          localProbe.onload = () => {
+            linkEl.setAttribute('href', LOCAL_ICON_FALLBACK_URL);
+          };
+          localProbe.onerror = () => {
+            linkEl.setAttribute('href', canvasFallback);
+          };
+          localProbe.src = LOCAL_ICON_FALLBACK_URL;
+        };
+        probe.src = PRIMARY_LOGO_URL;
+      }
+
+      function setupPwaManifest() {
+        try {
+          const canvasFallback = createCanvasFallbackIconUrl();
+          const favicon = document.getElementById('pwaFavicon');
+          const appleIcon = document.getElementById('pwaAppleIcon');
+          const headerLogo = document.getElementById('headerBrandLogo');
+
+          if (favicon) {
+            favicon.setAttribute('href', PRIMARY_LOGO_URL);
+            attachLinkFallbackChain(favicon);
+          }
+
+          if (appleIcon) {
+            appleIcon.setAttribute('href', PRIMARY_LOGO_URL);
+            attachLinkFallbackChain(appleIcon);
+          }
+
+          if (headerLogo) {
+            headerLogo.src = PRIMARY_LOGO_URL;
+            attachImageFallbackChain(headerLogo);
+          }
+
+          const startUrl =
+            window.location.protocol === 'http:' || window.location.protocol === 'https:'
+              ? new URL('./', window.location.href).href
+              : './index.html';
+
+          const manifestObj = {
+            name: 'Home Inventory',
+            short_name: 'Home Inventory',
+            description: 'Aplikasi PWA Inventori Rumah & Senarai Belian Tempatan.',
+            start_url: startUrl,
+            scope: startUrl,
+            display: 'standalone',
+            orientation: 'portrait',
+            background_color: '#090d16',
+            theme_color: '#090d16',
+            icons: [
+              {
+                src: PRIMARY_LOGO_URL,
+                sizes: '192x192',
+                type: 'image/png',
+                purpose: 'any maskable',
+              },
+              {
+                src: canvasFallback,
+                sizes: '192x192',
+                type: 'image/png',
+                purpose: 'any',
+              },
+            ],
+          };
+
+          const linkEl = document.getElementById('pwaManifestLink');
+          if (!linkEl) return;
+
+          if (manifestBlobUrl) {
+            URL.revokeObjectURL(manifestBlobUrl);
+            manifestBlobUrl = null;
+          }
+          const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+          manifestBlobUrl = URL.createObjectURL(blob);
+          linkEl.setAttribute('href', manifestBlobUrl);
+        } catch (err) {
+          console.warn('PWA manifest fallback aktif:', err);
+        }
+      }
+
+      async function setupServiceWorkerSafe() {
+        if (!('serviceWorker' in navigator)) return;
+        const proto = window.location.protocol;
+        if (proto !== 'http:' && proto !== 'https:') return;
+        const secure =
+          window.isSecureContext ||
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1';
+        if (!secure) return;
+
+        const swCode = `
+          const CACHE_NAME = 'home-inventory-local-v1';
+
+          self.addEventListener('install', () => {
+            self.skipWaiting();
+          });
+
+          self.addEventListener('activate', (event) => {
+            event.waitUntil(self.clients.claim());
+          });
+
+          self.addEventListener('fetch', (event) => {
+            if (event.request.method !== 'GET') return;
+            const url = new URL(event.request.url);
+            if (url.origin !== self.location.origin) return;
+
+            event.respondWith(
+              caches.match(event.request).then((cached) => {
+                const networkFetch = fetch(event.request)
+                  .then((res) => {
+                    if (res && res.status === 200) {
+                      const clone = res.clone();
+                      caches.open(CACHE_NAME).then((c) => c.put(event.request, clone)).catch(() => {});
+                    }
+                    return res;
+                  })
+                  .catch(() => cached || Response.error());
+                return cached || networkFetch;
+              })
+            );
+          });
+        `;
+
+        let swUrl = null;
+        try {
+          const blob = new Blob([swCode], { type: 'application/javascript' });
+          swUrl = URL.createObjectURL(blob);
+          await navigator.serviceWorker.register(swUrl, { scope: './' });
+        } catch (_err) {
+          // Abaikan jika persekitaran pelayar menyekat Blob Service Worker
+        } finally {
+          if (swUrl) {
+            setTimeout(() => URL.revokeObjectURL(swUrl), 15000);
+          }
+        }
+      }
+
+      // ---------------------------------------------------------------------
+      // 4. KEADAAN APLIKASI & RUJUKAN DOM
+      // ---------------------------------------------------------------------
+      const state = {
+        activeView: 'utama',
+        items: [],
+        senaraiSearch: '',
+        senaraiStatus: 'ALL', // ALL | OK | BUY
+        senaraiCategory: 'ALL',
+        beliCategory: 'ALL',
+        buyQtyDraft: new Map(),
+        pendingDeleteId: null,
+      };
+
+      const dom = {
+        toastContainer: document.getElementById('toastContainer'),
+        openDataModalBtn: document.getElementById('openDataModalBtn'),
+        navBeliBadge: document.getElementById('navBeliBadge'),
+
+        views: {
+          utama: document.getElementById('view-utama'),
+          senarai: document.getElementById('view-senarai'),
+          beli: document.getElementById('view-beli'),
+          tambah: document.getElementById('view-tambah'),
+        },
+
+        metricTotalItems: document.getElementById('metricTotalItems'),
+        metricInStock: document.getElementById('metricInStock'),
+        metricNeedBuy: document.getElementById('metricNeedBuy'),
+        utamaCategoryGrid: document.getElementById('utamaCategoryGrid'),
+
+        senaraiSubtitle: document.getElementById('senaraiSubtitle'),
+        senaraiSearchInput: document.getElementById('senaraiSearchInput'),
+        clearSearchBtn: document.getElementById('clearSearchBtn'),
+        senaraiStatusPills: document.getElementById('senaraiStatusPills'),
+        senaraiCategorySelect: document.getElementById('senaraiCategorySelect'),
+        senaraiCategoryPills: document.getElementById('senaraiCategoryPills'),
+        senaraiGroupedContainer: document.getElementById('senaraiGroupedContainer'),
+
+        beliSummaryText: document.getElementById('beliSummaryText'),
+        markAllBoughtBtn: document.getElementById('markAllBoughtBtn'),
+        beliCategoryPills: document.getElementById('beliCategoryPills'),
+        beliGroupedContainer: document.getElementById('beliGroupedContainer'),
+
+        addItemForm: document.getElementById('addItemForm'),
+        tambahName: document.getElementById('tambahName'),
+        tambahCategory: document.getElementById('tambahCategory'),
+        tambahUnit: document.getElementById('tambahUnit'),
+        unitQuickChips: document.getElementById('unitQuickChips'),
+        tambahStokSemasa: document.getElementById('tambahStokSemasa'),
+        tambahParasMin: document.getElementById('tambahParasMin'),
+        tambahNotes: document.getElementById('tambahNotes'),
+
+        dataModal: document.getElementById('dataModal'),
+        closeDataModalBtn: document.getElementById('closeDataModalBtn'),
+        dataModalItemCount: document.getElementById('dataModalItemCount'),
+        exportJsonBtn: document.getElementById('exportJsonBtn'),
+        importJsonInput: document.getElementById('importJsonInput'),
+
+        editModal: document.getElementById('editModal'),
+        closeEditModalBtn: document.getElementById('closeEditModalBtn'),
+        cancelEditBtn: document.getElementById('cancelEditBtn'),
+        editItemForm: document.getElementById('editItemForm'),
+        editItemId: document.getElementById('editItemId'),
+        editItemName: document.getElementById('editItemName'),
+        editItemCategory: document.getElementById('editItemCategory'),
+        editItemUnit: document.getElementById('editItemUnit'),
+        editItemStok: document.getElementById('editItemStok'),
+        editItemMin: document.getElementById('editItemMin'),
+        editItemNotes: document.getElementById('editItemNotes'),
+
+        deleteModal: document.getElementById('deleteModal'),
+        deleteModalMessage: document.getElementById('deleteModalMessage'),
+        cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+        confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+      };
+
+      // ---------------------------------------------------------------------
+      // 5. UTILITI & PENGURUSAN LOCALSTORAGE
+      // ---------------------------------------------------------------------
+      function generateId() {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          return crypto.randomUUID();
+        }
+        return 'hi_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+      }
+
+      function escapeHtml(text) {
+        return String(text ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function showToast(message, type = 'info') {
+        if (!dom.toastContainer) return;
+        const tones = {
+          success: 'bg-emerald-950/95 border-emerald-400/40 text-emerald-100',
+          warn: 'bg-amber-950/95 border-amber-400/40 text-amber-100',
+          error: 'bg-rose-950/95 border-rose-400/40 text-rose-100',
+          info: 'bg-slate-900/95 border-white/15 text-slate-100',
+        };
+        const toast = document.createElement('div');
+        toast.className = `toast-animate px-4 py-3 rounded-2xl border backdrop-blur-md text-xs sm:text-sm font-medium shadow-xl pointer-events-auto ${tones[type] || tones.info}`;
+        toast.textContent = message;
+        dom.toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-6px)';
+          toast.style.transition = 'all 0.2s ease';
+          setTimeout(() => toast.remove(), 220);
+        }, 2800);
+      }
+
+      function sanitizeNonNegInt(value, fallback = 0) {
+        const parsed = Number.parseInt(String(value ?? ''), 10);
+        if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return Math.max(0, fallback);
+        return Math.max(0, parsed);
+      }
+
+      function normalizeItem(raw) {
+        const now = new Date().toISOString();
+        const stock = sanitizeNonNegInt(raw?.stock ?? raw?.stok_semasa, 0);
+        const minStock = sanitizeNonNegInt(raw?.min_stock ?? raw?.paras_min, 1);
+
+        return {
+          id: String(raw?.id || generateId()),
+          name: String(raw?.name || '').trim() || 'Barang Tanpa Nama',
+          category: normalizeCategory(raw?.category),
+          stock,
+          min_stock: minStock,
+          unit: String(raw?.unit || 'unit').trim() || 'unit',
+          notes: String(raw?.notes || '').trim(),
+          created_at: String(raw?.created_at || now),
+          updated_at: String(raw?.updated_at || now),
+        };
+      }
+
+      function sortItems(items) {
+        const catRank = new Map(FIXED_CATEGORIES.map((c, idx) => [c, idx]));
+        return [...items].sort((a, b) => {
+          const ra = catRank.has(a.category) ? catRank.get(a.category) : 99;
+          const rb = catRank.has(b.category) ? catRank.get(b.category) : 99;
+          if (ra !== rb) return ra - rb;
+          return a.name.localeCompare(b.name, 'ms');
+        });
+      }
+
+      function saveItemsToLocalStorage() {
+        try {
+          state.items = sortItems(state.items.map(normalizeItem));
+          localStorage.setItem(STORAGE_ITEMS_KEY, JSON.stringify(state.items));
+          localStorage.setItem(STORAGE_SEEDED_KEY, 'true');
+        } catch (err) {
+          console.error('Ralat menyimpan ke localStorage:', err);
+          showToast('Gagal menyimpan data ke storan pelayar.', 'error');
+        }
+      }
+
+      function buildStarterItems() {
+        const now = new Date().toISOString();
+        return STARTER_CATALOG_99.map(([name, category, stock, min_stock, unit, notes]) =>
+          normalizeItem({
+            id: generateId(),
+            name,
+            category,
+            stock,
+            min_stock,
+            unit,
+            notes,
+            created_at: now,
+            updated_at: now,
+          })
+        );
+      }
+
+      function loadInitialLocalInventory() {
+        try {
+          const alreadySeeded = localStorage.getItem(STORAGE_SEEDED_KEY) === 'true';
+          const rawJson = localStorage.getItem(STORAGE_ITEMS_KEY);
+
+          if (rawJson !== null) {
+            const parsed = JSON.parse(rawJson);
+            if (Array.isArray(parsed)) {
+              state.items = sortItems(parsed.map(normalizeItem));
+              if (!alreadySeeded) {
+                localStorage.setItem(STORAGE_SEEDED_KEY, 'true');
+              }
+              return;
+            }
+          }
+
+          if (!alreadySeeded) {
+            state.items = sortItems(buildStarterItems());
+            saveItemsToLocalStorage();
+          } else {
+            state.items = [];
+          }
+        } catch (err) {
+          console.error('Ralat membaca localStorage, menggunakan katalog asas:', err);
+          state.items = sortItems(buildStarterItems());
+          saveItemsToLocalStorage();
+        }
+      }
+
+      // Peraturan 2 status stok berasaskan min_stock sahaja:
+      // 1. "Perlu Beli" apabila stock <= min_stock (termasuk stock === 0)
+      // 2. "Cukup" apabila stock > min_stock
+      function isItemNeedBuy(item) {
+        return sanitizeNonNegInt(item?.stock, 0) <= sanitizeNonNegInt(item?.min_stock, 1);
+      }
+
+      function isItemSufficient(item) {
+        return !isItemNeedBuy(item);
+      }
+
+      function getItemStatusMeta(item) {
+        if (isItemNeedBuy(item)) {
+          return {
+            code: 'BUY',
+            label: 'Perlu Beli',
+            pillClass: 'bg-amber-500/15 text-amber-300 border-amber-400/35',
+          };
+        }
+        return {
+          code: 'OK',
+          label: 'Cukup',
+          pillClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/35',
+        };
+      }
+
+      function getSuggestedBuyQty(item) {
+        const stock = sanitizeNonNegInt(item?.stock, 0);
+        const minStock = sanitizeNonNegInt(item?.min_stock, 1);
+        return Math.max(1, minStock + 1 - stock);
+      }
+
+      function getDraftBuyQty(item) {
+        if (state.buyQtyDraft.has(item.id)) {
+          const val = sanitizeNonNegInt(state.buyQtyDraft.get(item.id), 1);
+          return Math.max(1, val);
+        }
+        return getSuggestedBuyQty(item);
+      }
+
+      // ---------------------------------------------------------------------
+      // 6. OPERASI CRUD TEMPATAN (LOCALSTORAGE)
+      // ---------------------------------------------------------------------
+      function adjustItemStock(itemId, delta) {
+        const idx = state.items.findIndex((it) => it.id === itemId);
+        if (idx === -1) return;
+
+        const target = state.items[idx];
+        const nextStock = Math.max(0, target.stock + delta);
+        if (nextStock === target.stock) return;
+
+        state.items[idx] = {
+          ...target,
+          stock: nextStock,
+          updated_at: new Date().toISOString(),
+        };
+
+        saveItemsToLocalStorage();
+        renderAll();
+      }
+
+      function addNewItem(payload) {
+        const newItem = normalizeItem({
+          id: generateId(),
+          name: payload.name,
+          category: payload.category,
+          stock: payload.stock,
+          min_stock: payload.min_stock,
+          unit: payload.unit,
+          notes: payload.notes,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        state.items.push(newItem);
+        saveItemsToLocalStorage();
+        renderAll();
+        showToast(`"${newItem.name}" ditambah ke inventori.`, 'success');
+      }
+
+      function updateExistingItem(itemId, payload) {
+        const idx = state.items.findIndex((it) => it.id === itemId);
+        if (idx === -1) return;
+
+        const prev = state.items[idx];
+        state.items[idx] = normalizeItem({
+          ...prev,
+          name: payload.name,
+          category: payload.category,
+          stock: payload.stock,
+          min_stock: payload.min_stock,
+          unit: payload.unit,
+          notes: payload.notes,
+          updated_at: new Date().toISOString(),
+        });
+
+        saveItemsToLocalStorage();
+        renderAll();
+        showToast('Perubahan barang disimpan.', 'success');
+      }
+
+      function deleteExistingItem(itemId) {
+        const idx = state.items.findIndex((it) => it.id === itemId);
+        if (idx === -1) return;
+
+        const removedName = state.items[idx].name;
+        state.items.splice(idx, 1);
+        state.buyQtyDraft.delete(itemId);
+
+        saveItemsToLocalStorage();
+        renderAll();
+        showToast(`"${removedName}" telah dipadam.`, 'info');
+      }
+
+      function markSingleItemBought(itemId) {
+        const idx = state.items.findIndex((it) => it.id === itemId);
+        if (idx === -1) return;
+
+        const item = state.items[idx];
+        const buyQty = getDraftBuyQty(item);
+        const safeNewStock = Math.max(item.stock + buyQty, item.min_stock + 1);
+
+        state.items[idx] = {
+          ...item,
+          stock: safeNewStock,
+          updated_at: new Date().toISOString(),
+        };
+        state.buyQtyDraft.delete(itemId);
+
+        saveItemsToLocalStorage();
+        renderAll();
+        showToast(`"${item.name}" direstok ke ${safeNewStock} ${item.unit}.`, 'success');
+      }
+
+      function markAllVisibleBought() {
+        const buyItems = getFilteredBeliItems();
+        if (buyItems.length === 0) return;
+
+        const now = new Date().toISOString();
+        const updatesById = new Map();
+
+        for (const item of buyItems) {
+          const buyQty = getDraftBuyQty(item);
+          const safeNewStock = Math.max(item.stock + buyQty, item.min_stock + 1);
+          updatesById.set(item.id, safeNewStock);
+          state.buyQtyDraft.delete(item.id);
+        }
+
+        state.items = state.items.map((it) => {
+          if (!updatesById.has(it.id)) return it;
+          return {
+            ...it,
+            stock: updatesById.get(it.id),
+            updated_at: now,
+          };
+        });
+
+        saveItemsToLocalStorage();
+        renderAll();
+        showToast(`${buyItems.length} barang selesai dibeli & direstok.`, 'success');
+      }
+
+      // ---------------------------------------------------------------------
+      // 7. SANDARAN DATA (EKSPORT & IMPORT JSON TEMPATAN)
+      // ---------------------------------------------------------------------
+      function exportBackupJson() {
+        try {
+          const payload = {
+            app: 'Home Inventory',
+            version: 1,
+            exported_at: new Date().toISOString(),
+            total_items: state.items.length,
+            items: state.items,
+          };
+
+          const jsonText = JSON.stringify(payload, null, 2);
+          const blob = new Blob([jsonText], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+
+          const dateTag = new Date().toISOString().slice(0, 10);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `home-inventory-backup-${dateTag}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          showToast(`Sandaran JSON (${state.items.length} item) berjaya dieksport.`, 'success');
+        } catch (err) {
+          console.error('Ralat eksport JSON:', err);
+          showToast('Gagal mengeksport sandaran JSON.', 'error');
+        }
+      }
+
+      function handleImportJsonFile(file) {
+        if (!file) return;
+        const modeInput = document.querySelector('input[name="importMode"]:checked');
+        const importMode = modeInput ? modeInput.value : 'merge';
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(String(reader.result || ''));
+            const rawList = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.items) ? parsed.items : null;
+
+            if (!rawList) {
+              showToast('Format fail JSON tidak sah. Pastikan ia mengandungi senarai item.', 'error');
+              return;
+            }
+
+            const validNormalized = rawList
+              .filter((entry) => entry && typeof entry === 'object' && String(entry.name || '').trim())
+              .map(normalizeItem);
+
+            if (validNormalized.length === 0) {
+              showToast('Tiada rekod barang sah ditemui dalam fail JSON tersebut.', 'warn');
+              return;
+            }
+
+            if (importMode === 'replace') {
+              state.items = sortItems(validNormalized);
+              state.buyQtyDraft.clear();
+              saveItemsToLocalStorage();
+              renderAll();
+              if (dom.dataModalItemCount) {
+                dom.dataModalItemCount.textContent = `${state.items.length} item`;
+              }
+              showToast(`Semua data diganti dengan ${state.items.length} item daripada fail JSON.`, 'success');
+              return;
+            }
+
+            const existingMap = new Map(
+              state.items.map((it) => [`${it.name.toLowerCase()}::${it.category}`, it])
+            );
+
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            for (const incoming of validNormalized) {
+              const key = `${incoming.name.toLowerCase()}::${incoming.category}`;
+              if (existingMap.has(key)) {
+                const prev = existingMap.get(key);
+                existingMap.set(key, {
+                  ...prev,
+                  stock: incoming.stock,
+                  min_stock: incoming.min_stock,
+                  unit: incoming.unit,
+                  notes: incoming.notes,
+                  updated_at: new Date().toISOString(),
+                });
+                updatedCount += 1;
+              } else {
+                existingMap.set(key, {
+                  ...incoming,
+                  id: generateId(),
+                });
+                addedCount += 1;
+              }
+            }
+
+            state.items = sortItems(Array.from(existingMap.values()));
+            saveItemsToLocalStorage();
+            renderAll();
+            if (dom.dataModalItemCount) {
+              dom.dataModalItemCount.textContent = `${state.items.length} item`;
+            }
+            showToast(`Import selesai: ${addedCount} ditambah, ${updatedCount} dikemaskini.`, 'success');
+          } catch (err) {
+            console.error('Ralat import JSON:', err);
+            showToast('Fail JSON rosak atau tidak dapat dibaca.', 'error');
+          }
+        };
+        reader.onerror = () => {
+          showToast('Gagal membaca fail dari peranti anda.', 'error');
+        };
+        reader.readAsText(file);
+      }
+
+      // ---------------------------------------------------------------------
+      // 8. NAVIGASI & PEMAPARAN ANTARA MUKA (4 PAPARAN)
+      // ---------------------------------------------------------------------
+      function setActiveView(viewName, options = {}) {
+        const targetView = dom.views[viewName] ? viewName : 'utama';
+        state.activeView = targetView;
+
+        if (options.presetStatus) {
+          state.senaraiStatus = options.presetStatus;
+        }
+        if (options.presetCategory) {
+          state.senaraiCategory = options.presetCategory;
+        }
+
+        Object.entries(dom.views).forEach(([key, sectionEl]) => {
+          if (!sectionEl) return;
+          sectionEl.classList.toggle('hidden', key !== targetView);
+        });
+
+        document.querySelectorAll('.nav-tab').forEach((btn) => {
+          const isMatch = btn.getAttribute('data-nav-target') === targetView;
+          if (isMatch) {
+            btn.className =
+              'nav-tab flex flex-col items-center justify-center py-2 px-2 rounded-full text-xs font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-400/35 shadow-sm transition-all duration-200 cursor-pointer relative';
+          } else {
+            btn.className =
+              'nav-tab flex flex-col items-center justify-center py-2 px-2 rounded-full text-xs font-medium text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] border border-transparent transition-all duration-200 cursor-pointer relative';
+          }
+        });
+
+        renderAll();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function populateCategorySelects() {
+        const optionsHtml = FIXED_CATEGORIES.map(
+          (cat) => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`
+        ).join('');
+
+        if (dom.tambahCategory) dom.tambahCategory.innerHTML = optionsHtml;
+        if (dom.editItemCategory) dom.editItemCategory.innerHTML = optionsHtml;
+
+        if (dom.senaraiCategorySelect) {
+          dom.senaraiCategorySelect.innerHTML =
+            `<option value="ALL">Semua Kategori</option>` + optionsHtml;
+        }
+      }
+
+      function renderUnitQuickChips() {
+        if (!dom.unitQuickChips) return;
+        dom.unitQuickChips.innerHTML = QUICK_UNITS.map(
+          (unit) => `
+            <button
+              type="button"
+              data-quick-unit="${escapeHtml(unit)}"
+              class="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-400/35 text-[11px] font-medium text-slate-300 hover:text-emerald-200 transition cursor-pointer"
+            >
+              ${escapeHtml(unit)}
+            </button>
+          `
+        ).join('');
+      }
+
+      function renderHeaderAndBadges() {
+        const needBuyCount = state.items.filter(isItemNeedBuy).length;
+        if (dom.navBeliBadge) {
+          dom.navBeliBadge.textContent = String(needBuyCount);
+          dom.navBeliBadge.classList.toggle('hidden', needBuyCount === 0);
+        }
+      }
+
+      function renderUtama() {
+        const total = state.items.length;
+        const sufficientCount = state.items.filter(isItemSufficient).length;
+        const needBuyCount = state.items.filter(isItemNeedBuy).length;
+
+        if (dom.metricTotalItems) dom.metricTotalItems.textContent = String(total);
+        if (dom.metricInStock) dom.metricInStock.textContent = String(sufficientCount);
+        if (dom.metricNeedBuy) dom.metricNeedBuy.textContent = String(needBuyCount);
+
+        if (dom.utamaCategoryGrid) {
+          dom.utamaCategoryGrid.innerHTML = FIXED_CATEGORIES.map((cat) => {
+            const meta = CATEGORY_META[cat] || {
+              badgeBg: 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300',
+              bar: 'bg-emerald-400',
+              icon: '',
+            };
+            const catItems = state.items.filter((it) => it.category === cat);
+            const okItems = catItems.filter(isItemSufficient).length;
+            const buyItemsCount = catItems.filter(isItemNeedBuy).length;
+            const healthyPct = catItems.length > 0 ? Math.round((okItems / catItems.length) * 100) : 0;
+
+            return `
+              <button
+                type="button"
+                data-nav-target="senarai"
+                data-preset-status="ALL"
+                data-preset-category="${escapeHtml(cat)}"
+                class="glass-card rounded-2xl p-3.5 text-left space-y-2.5 cursor-pointer group"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${meta.badgeBg}">
+                      ${meta.icon}
+                    </span>
+                    <span class="text-xs sm:text-sm font-semibold text-slate-100 group-hover:text-emerald-300 transition line-clamp-2">
+                      ${escapeHtml(cat)}
+                    </span>
+                  </div>
+                  <span class="text-xs font-bold text-slate-300 shrink-0">${catItems.length}</span>
+                </div>
+
+                <div class="w-full h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                  <div class="h-full rounded-full ${meta.bar} transition-all duration-300" style="width: ${healthyPct}%"></div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px]">
+                  <span class="text-slate-400">${okItems}/${catItems.length} cukup</span>
+                  ${
+                    buyItemsCount > 0
+                      ? `<span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 font-semibold">${buyItemsCount} perlu beli</span>`
+                      : `<span class="text-emerald-400 font-medium">Semua cukup</span>`
+                  }
+                </div>
+              </button>
+            `;
+          }).join('');
+        }
+      }
+
+      function getFilteredSenaraiItems() {
+        const q = state.senaraiSearch.trim().toLowerCase();
+        return state.items.filter((item) => {
+          if (state.senaraiCategory !== 'ALL' && item.category !== state.senaraiCategory) {
+            return false;
+          }
+          if (state.senaraiStatus === 'OK' && !isItemSufficient(item)) return false;
+          if (state.senaraiStatus === 'BUY' && !isItemNeedBuy(item)) return false;
+
+          if (q) {
+            const hay = `${item.name} ${item.category} ${item.unit} ${item.notes}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderSenarai() {
+        if (dom.clearSearchBtn) {
+          dom.clearSearchBtn.classList.toggle('hidden', state.senaraiSearch.length === 0);
+        }
+
+        if (dom.senaraiCategorySelect) {
+          dom.senaraiCategorySelect.value = state.senaraiCategory;
+        }
+
+        const statusDefs = [
+          { code: 'ALL', label: 'Semua' },
+          { code: 'OK', label: 'Cukup' },
+          { code: 'BUY', label: 'Perlu Beli' },
+        ];
+
+        if (dom.senaraiStatusPills) {
+          dom.senaraiStatusPills.innerHTML = statusDefs
+            .map((st) => {
+              const active = state.senaraiStatus === st.code;
+              return `
+                <button
+                  type="button"
+                  data-senarai-status="${st.code}"
+                  class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition cursor-pointer ${
+                    active
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-white/[0.05] hover:bg-white/[0.10] text-slate-300 border border-white/10'
+                  }"
+                >
+                  ${st.label}
+                </button>
+              `;
+            })
+            .join('');
+        }
+
+        if (dom.senaraiCategoryPills) {
+          const allChip = `
+            <button
+              type="button"
+              data-senarai-cat="ALL"
+              class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 transition cursor-pointer ${
+                state.senaraiCategory === 'ALL'
+                  ? 'bg-amber-500 text-slate-950 font-semibold'
+                  : 'bg-white/[0.05] hover:bg-white/[0.10] text-slate-300 border border-white/10'
+              }"
+            >
+              Semua Kategori
+            </button>
+          `;
+
+          const catChips = FIXED_CATEGORIES.map((cat) => {
+            const count = state.items.filter((it) => it.category === cat).length;
+            const active = state.senaraiCategory === cat;
+            return `
+              <button
+                type="button"
+                data-senarai-cat="${escapeHtml(cat)}"
+                class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 transition cursor-pointer ${
+                  active
+                    ? 'bg-amber-500 text-slate-950 font-semibold'
+                    : 'bg-white/[0.05] hover:bg-white/[0.10] text-slate-300 border border-white/10'
+                }"
+              >
+                ${escapeHtml(cat)} (${count})
+              </button>
+            `;
+          }).join('');
+
+          dom.senaraiCategoryPills.innerHTML = allChip + catChips;
+        }
+
+        const filtered = getFilteredSenaraiItems();
+        if (dom.senaraiSubtitle) {
+          dom.senaraiSubtitle.textContent = `Memaparkan ${filtered.length} daripada ${state.items.length} barangan inventori`;
+        }
+
+        if (!dom.senaraiGroupedContainer) return;
+
+        if (filtered.length === 0) {
+          dom.senaraiGroupedContainer.innerHTML = `
+            <div class="glass-panel rounded-2xl p-8 text-center space-y-2">
+              <div class="text-sm font-semibold text-slate-200">Tiada barang ditemui</div>
+              <p class="text-xs text-slate-400">Cuba ubah kata kunci carian, penapis status atau kategori yang dipilih.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const groupsHtml = FIXED_CATEGORIES.map((cat) => {
+          const groupItems = filtered.filter((it) => it.category === cat);
+          if (groupItems.length === 0) return '';
+          const meta = CATEGORY_META[cat] || {
+            badgeBg: 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300',
+            icon: '',
+          };
+
+          const cardsHtml = groupItems
+            .map((item) => {
+              const st = getItemStatusMeta(item);
+              return `
+                <div class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="min-w-0 space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-sm font-semibold text-white">${escapeHtml(item.name)}</span>
+                      <span class="px-2 py-0.5 rounded-full border text-[10px] font-semibold ${st.pillClass}">
+                        ${st.label}
+                      </span>
+                    </div>
+                    <div class="text-xs text-slate-400 flex items-center gap-2 flex-wrap">
+                      <span>Stok minimum: <strong class="text-slate-200">${item.min_stock} ${escapeHtml(item.unit)}</strong></span>
+                      ${item.notes ? `<span>• ${escapeHtml(item.notes)}</span>` : ''}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                    <!-- Pelaras Stok Pantas -->
+                    <div class="flex items-center gap-1.5 bg-slate-950/75 border border-white/10 rounded-xl p-1">
+                      <button
+                        type="button"
+                        data-stock-delta="-1"
+                        data-item-id="${escapeHtml(item.id)}"
+                        aria-label="Kurangkan stok ${escapeHtml(item.name)}"
+                        class="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-rose-500/20 text-slate-200 font-bold transition cursor-pointer"
+                      >
+                        −
+                      </button>
+                      <span class="min-w-[4.5rem] text-center text-xs font-bold text-white px-1">
+                        ${item.stock} <span class="text-slate-400 font-normal">${escapeHtml(item.unit)}</span>
+                      </span>
+                      <button
+                        type="button"
+                        data-stock-delta="1"
+                        data-item-id="${escapeHtml(item.id)}"
+                        aria-label="Tambahkan stok ${escapeHtml(item.name)}"
+                        class="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-emerald-500/20 text-slate-200 font-bold transition cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <!-- Butang Sunting -->
+                    <button
+                      type="button"
+                      data-edit-id="${escapeHtml(item.id)}"
+                      aria-label="Sunting ${escapeHtml(item.name)}"
+                      title="Sunting Barang"
+                      class="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/10 flex items-center justify-center text-slate-300 transition cursor-pointer"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+
+                    <!-- Butang Padam -->
+                    <button
+                      type="button"
+                      data-delete-id="${escapeHtml(item.id)}"
+                      aria-label="Padam ${escapeHtml(item.name)}"
+                      title="Padam Barang"
+                      class="w-9 h-9 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 border border-rose-400/25 flex items-center justify-center text-rose-300 transition cursor-pointer"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              `;
+            })
+            .join('');
+
+          return `
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-7 h-7 rounded-lg border flex items-center justify-center ${meta.badgeBg}">
+                    ${meta.icon}
+                  </span>
+                  <h3 class="text-sm font-bold text-slate-100">${escapeHtml(cat)}</h3>
+                </div>
+                <span class="text-xs text-slate-400 font-medium">${groupItems.length} barang</span>
+              </div>
+              <div class="space-y-2.5">${cardsHtml}</div>
+            </div>
+          `;
+        }).join('');
+
+        dom.senaraiGroupedContainer.innerHTML = groupsHtml;
+      }
+
+      function getFilteredBeliItems() {
+        const buyItems = state.items.filter(isItemNeedBuy);
+        if (state.beliCategory === 'ALL') return buyItems;
+        return buyItems.filter((it) => it.category === state.beliCategory);
+      }
+
+      function renderBeli() {
+        const allNeedBuy = state.items.filter(isItemNeedBuy);
+        const filteredNeedBuy = getFilteredBeliItems();
+
+        if (dom.beliSummaryText) {
+          dom.beliSummaryText.textContent =
+            allNeedBuy.length === 0
+              ? 'Tiada barangan berstatus Perlu Beli buat masa ini'
+              : `${allNeedBuy.length} barangan berstatus Perlu Beli (baki stok pada atau bawah minimum)`;
+        }
+
+        if (dom.markAllBoughtBtn) {
+          dom.markAllBoughtBtn.disabled = filteredNeedBuy.length === 0;
+        }
+
+        if (dom.beliCategoryPills) {
+          const allChip = `
+            <button
+              type="button"
+              data-beli-cat="ALL"
+              class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 transition cursor-pointer ${
+                state.beliCategory === 'ALL'
+                  ? 'bg-amber-500 text-slate-950 font-semibold'
+                  : 'bg-white/[0.05] hover:bg-white/[0.10] text-slate-300 border border-white/10'
+              }"
+            >
+              Semua (${allNeedBuy.length})
+            </button>
+          `;
+
+          const catChips = FIXED_CATEGORIES.map((cat) => {
+            const count = allNeedBuy.filter((it) => it.category === cat).length;
+            if (count === 0) return '';
+            const active = state.beliCategory === cat;
+            return `
+              <button
+                type="button"
+                data-beli-cat="${escapeHtml(cat)}"
+                class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 transition cursor-pointer ${
+                  active
+                    ? 'bg-amber-500 text-slate-950 font-semibold'
+                    : 'bg-white/[0.05] hover:bg-white/[0.10] text-slate-300 border border-white/10'
+                }"
+              >
+                ${escapeHtml(cat)} (${count})
+              </button>
+            `;
+          }).join('');
+
+          dom.beliCategoryPills.innerHTML = allChip + catChips;
+        }
+
+        if (!dom.beliGroupedContainer) return;
+
+        if (filteredNeedBuy.length === 0) {
+          dom.beliGroupedContainer.innerHTML = `
+            <div class="glass-panel rounded-2xl p-8 text-center space-y-2">
+              <div class="text-base font-bold text-emerald-300">Senarai Belian Kosong</div>
+              <p class="text-xs text-slate-400">Semua barangan dalam kategori ini berstatus Cukup (baki melebihi stok minimum).</p>
+            </div>
+          `;
+          return;
+        }
+
+        const groupsHtml = FIXED_CATEGORIES.map((cat) => {
+          const groupItems = filteredNeedBuy.filter((it) => it.category === cat);
+          if (groupItems.length === 0) return '';
+          const meta = CATEGORY_META[cat] || {
+            badgeBg: 'bg-amber-500/15 border-amber-400/30 text-amber-300',
+            icon: '',
+          };
+
+          const cardsHtml = groupItems
+            .map((item) => {
+              const st = getItemStatusMeta(item);
+              const buyQty = getDraftBuyQty(item);
+              return `
+                <div class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="min-w-0 space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-sm font-semibold text-white">${escapeHtml(item.name)}</span>
+                      <span class="px-2 py-0.5 rounded-full border text-[10px] font-semibold ${st.pillClass}">
+                        ${st.label}
+                      </span>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                      Baki: <strong class="text-slate-200">${item.stock} ${escapeHtml(item.unit)}</strong> •
+                      Min: <strong class="text-slate-200">${item.min_stock} ${escapeHtml(item.unit)}</strong>
+                      ${item.notes ? ` • ${escapeHtml(item.notes)}` : ''}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0">
+                    <!-- Pelaras Kuantiti Cadangan Beli -->
+                    <div class="flex items-center gap-1 bg-slate-950/75 border border-white/10 rounded-xl p-1">
+                      <button
+                        type="button"
+                        data-buy-qty-delta="-1"
+                        data-item-id="${escapeHtml(item.id)}"
+                        aria-label="Kurangkan kuantiti beli"
+                        class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] text-slate-200 font-bold cursor-pointer"
+                      >
+                        −
+                      </button>
+                      <span class="min-w-[4.25rem] text-center text-xs font-bold text-amber-300 px-1">
+                        +${buyQty} ${escapeHtml(item.unit)}
+                      </span>
+                      <button
+                        type="button"
+                        data-buy-qty-delta="1"
+                        data-item-id="${escapeHtml(item.id)}"
+                        aria-label="Tambahkan kuantiti beli"
+                        class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] text-slate-200 font-bold cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      data-mark-bought-id="${escapeHtml(item.id)}"
+                      class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold transition cursor-pointer"
+                    >
+                      Tandakan Dibeli
+                    </button>
+                  </div>
+                </div>
+              `;
+            })
+            .join('');
+
+          return `
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-7 h-7 rounded-lg border flex items-center justify-center ${meta.badgeBg}">
+                    ${meta.icon}
+                  </span>
+                  <h3 class="text-sm font-bold text-slate-100">${escapeHtml(cat)}</h3>
+                </div>
+                <span class="text-xs text-amber-300 font-semibold">${groupItems.length} item</span>
+              </div>
+              <div class="space-y-2.5">${cardsHtml}</div>
+            </div>
+          `;
+        }).join('');
+
+        dom.beliGroupedContainer.innerHTML = groupsHtml;
+      }
+
+      function renderAll() {
+        renderHeaderAndBadges();
+        if (state.activeView === 'utama') renderUtama();
+        if (state.activeView === 'senarai') renderSenarai();
+        if (state.activeView === 'beli') renderBeli();
+      }
+
+      // ---------------------------------------------------------------------
+      // 9. MODAL PENGURUSAN DATA, SUNTING & PADAM
+      // ---------------------------------------------------------------------
+      function openDataModal() {
+        if (dom.dataModalItemCount) {
+          dom.dataModalItemCount.textContent = `${state.items.length} item`;
+        }
+        dom.dataModal?.classList.remove('hidden');
+      }
+
+      function closeDataModal() {
+        dom.dataModal?.classList.add('hidden');
+      }
+
+      function openEditModal(itemId) {
+        const item = state.items.find((it) => it.id === itemId);
+        if (!item) return;
+
+        if (dom.editItemId) dom.editItemId.value = item.id;
+        if (dom.editItemName) dom.editItemName.value = item.name;
+        if (dom.editItemCategory) dom.editItemCategory.value = normalizeCategory(item.category);
+        if (dom.editItemUnit) dom.editItemUnit.value = item.unit;
+        if (dom.editItemStok) dom.editItemStok.value = String(item.stock);
+        if (dom.editItemMin) dom.editItemMin.value = String(item.min_stock);
+        if (dom.editItemNotes) dom.editItemNotes.value = item.notes || '';
+        dom.editModal?.classList.remove('hidden');
+      }
+
+      function closeEditModal() {
+        dom.editModal?.classList.add('hidden');
+      }
+
+      function openDeleteModal(itemId) {
+        const item = state.items.find((it) => it.id === itemId);
+        if (!item) return;
+        state.pendingDeleteId = item.id;
+        if (dom.deleteModalMessage) {
+          dom.deleteModalMessage.textContent = `Adakah anda pasti mahu memadam "${item.name}" daripada inventori?`;
+        }
+        dom.deleteModal?.classList.remove('hidden');
+      }
+
+      function closeDeleteModal() {
+        state.pendingDeleteId = null;
+        dom.deleteModal?.classList.add('hidden');
+      }
+
+      // ---------------------------------------------------------------------
+      // 10. IKATAN ACARA (EVENT LISTENERS)
+      // ---------------------------------------------------------------------
+      function bindEvents() {
+        document.addEventListener('click', (event) => {
+          const targetEl = event.target instanceof Element ? event.target : null;
+          if (!targetEl) return;
+
+          // Navigasi tab bawah & kad pautan pantas
+          const navBtn = targetEl.closest('[data-nav-target]');
+          if (navBtn) {
+            const targetView = navBtn.getAttribute('data-nav-target');
+            const presetStatus = navBtn.getAttribute('data-preset-status');
+            const presetCategory = navBtn.getAttribute('data-preset-category');
+            setActiveView(targetView, {
+              presetStatus: presetStatus || undefined,
+              presetCategory: presetCategory || undefined,
+            });
+            return;
+          }
+
+          // Cip pantas unit sukatan pada borang Tambah
+          const unitChipBtn = targetEl.closest('[data-quick-unit]');
+          if (unitChipBtn) {
+            const chosenUnit = unitChipBtn.getAttribute('data-quick-unit') || '';
+            if (dom.tambahUnit) {
+              dom.tambahUnit.value = chosenUnit;
+              dom.tambahUnit.focus();
+            }
+            return;
+          }
+
+          // Pelaras stok +/- pada Senarai
+          const stockBtn = targetEl.closest('[data-stock-delta]');
+          if (stockBtn) {
+            const itemId = stockBtn.getAttribute('data-item-id');
+            const delta = Number.parseInt(stockBtn.getAttribute('data-stock-delta') || '0', 10);
+            if (itemId && delta) {
+              adjustItemStock(itemId, delta);
+            }
+            return;
+          }
+
+          // Sunting barang
+          const editBtn = targetEl.closest('[data-edit-id]');
+          if (editBtn) {
+            const itemId = editBtn.getAttribute('data-edit-id');
+            if (itemId) openEditModal(itemId);
+            return;
+          }
+
+          // Padam barang
+          const deleteBtn = targetEl.closest('[data-delete-id]');
+          if (deleteBtn) {
+            const itemId = deleteBtn.getAttribute('data-delete-id');
+            if (itemId) openDeleteModal(itemId);
+            return;
+          }
+
+          // Penapis status pada Senarai
+          const statusBtn = targetEl.closest('[data-senarai-status]');
+          if (statusBtn) {
+            state.senaraiStatus = statusBtn.getAttribute('data-senarai-status') || 'ALL';
+            renderSenarai();
+            return;
+          }
+
+          // Penapis kategori pada Senarai
+          const senaraiCatBtn = targetEl.closest('[data-senarai-cat]');
+          if (senaraiCatBtn) {
+            state.senaraiCategory = senaraiCatBtn.getAttribute('data-senarai-cat') || 'ALL';
+            renderSenarai();
+            return;
+          }
+
+          // Penapis kategori pada Beli
+          const beliCatBtn = targetEl.closest('[data-beli-cat]');
+          if (beliCatBtn) {
+            state.beliCategory = beliCatBtn.getAttribute('data-beli-cat') || 'ALL';
+            renderBeli();
+            return;
+          }
+
+          // Pelaras kuantiti beli pada Beli
+          const buyQtyBtn = targetEl.closest('[data-buy-qty-delta]');
+          if (buyQtyBtn) {
+            const itemId = buyQtyBtn.getAttribute('data-item-id');
+            const delta = Number.parseInt(buyQtyBtn.getAttribute('data-buy-qty-delta') || '0', 10);
+            const item = state.items.find((it) => it.id === itemId);
+            if (item && delta) {
+              const current = getDraftBuyQty(item);
+              const next = Math.max(1, current + delta);
+              state.buyQtyDraft.set(item.id, next);
+              renderBeli();
+            }
+            return;
+          }
+
+          // Tandakan dibeli pada Beli
+          const boughtBtn = targetEl.closest('[data-mark-bought-id]');
+          if (boughtBtn) {
+            const itemId = boughtBtn.getAttribute('data-mark-bought-id');
+            if (itemId) markSingleItemBought(itemId);
+          }
+        });
+
+        // Carian masa nyata & butang kosongkan pada Senarai
+        dom.senaraiSearchInput?.addEventListener('input', (e) => {
+          state.senaraiSearch = e.target.value || '';
+          renderSenarai();
+        });
+
+        dom.clearSearchBtn?.addEventListener('click', () => {
+          state.senaraiSearch = '';
+          if (dom.senaraiSearchInput) {
+            dom.senaraiSearchInput.value = '';
+            dom.senaraiSearchInput.focus();
+          }
+          renderSenarai();
+        });
+
+        // Dropdown kategori pada Senarai
+        dom.senaraiCategorySelect?.addEventListener('change', (e) => {
+          state.senaraiCategory = e.target.value || 'ALL';
+          renderSenarai();
+        });
+
+        // Selesai semua pembelian pada Beli
+        dom.markAllBoughtBtn?.addEventListener('click', () => {
+          markAllVisibleBought();
+        });
+
+        // Borang Tambah Barang Baharu
+        dom.addItemForm?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = String(dom.tambahName?.value || '').trim();
+          if (!name) {
+            showToast('Sila masukkan nama barang terlebih dahulu.', 'warn');
+            return;
+          }
+
+          const category = normalizeCategory(dom.tambahCategory?.value);
+          const unit = String(dom.tambahUnit?.value || '').trim() || 'unit';
+          const stock = sanitizeNonNegInt(dom.tambahStokSemasa?.value, 0);
+          const min_stock = sanitizeNonNegInt(dom.tambahParasMin?.value, 1);
+          const notes = String(dom.tambahNotes?.value || '').trim();
+
+          addNewItem({ name, category, stock, min_stock, unit, notes });
+          dom.addItemForm?.reset();
+          if (dom.tambahStokSemasa) dom.tambahStokSemasa.value = '1';
+          if (dom.tambahParasMin) dom.tambahParasMin.value = '1';
+          if (dom.tambahCategory) dom.tambahCategory.value = category;
+        });
+
+        // Modal Pengurusan Data (Eksport / Import JSON)
+        dom.openDataModalBtn?.addEventListener('click', openDataModal);
+        dom.closeDataModalBtn?.addEventListener('click', closeDataModal);
+        dom.dataModal?.addEventListener('click', (e) => {
+          if (e.target === dom.dataModal) closeDataModal();
+        });
+
+        dom.exportJsonBtn?.addEventListener('click', exportBackupJson);
+        dom.importJsonInput?.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file) {
+            handleImportJsonFile(file);
+            e.target.value = '';
+          }
+        });
+
+        // Modal Sunting Barang
+        dom.closeEditModalBtn?.addEventListener('click', closeEditModal);
+        dom.cancelEditBtn?.addEventListener('click', closeEditModal);
+        dom.editModal?.addEventListener('click', (e) => {
+          if (e.target === dom.editModal) closeEditModal();
+        });
+
+        dom.editItemForm?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const id = String(dom.editItemId?.value || '');
+          const name = String(dom.editItemName?.value || '').trim();
+          if (!id || !name) return;
+
+          updateExistingItem(id, {
+            name,
+            category: normalizeCategory(dom.editItemCategory?.value),
+            unit: String(dom.editItemUnit?.value || '').trim() || 'unit',
+            stock: sanitizeNonNegInt(dom.editItemStok?.value, 0),
+            min_stock: sanitizeNonNegInt(dom.editItemMin?.value, 1),
+            notes: String(dom.editItemNotes?.value || '').trim(),
+          });
+          closeEditModal();
+        });
+
+        // Modal Padam Barang
+        dom.cancelDeleteBtn?.addEventListener('click', closeDeleteModal);
+        dom.deleteModal?.addEventListener('click', (e) => {
+          if (e.target === dom.deleteModal) closeDeleteModal();
+        });
+
+        dom.confirmDeleteBtn?.addEventListener('click', () => {
+          if (state.pendingDeleteId) {
+            deleteExistingItem(state.pendingDeleteId);
+          }
+          closeDeleteModal();
+        });
+
+        // Kekunci Escape untuk menutup mana-mana modal terbuka
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            closeDataModal();
+            closeEditModal();
+            closeDeleteModal();
+          }
+        });
+      }
+
+      // ---------------------------------------------------------------------
+      // 11. PERMULAAN APLIKASI
+      // ---------------------------------------------------------------------
+      function init() {
+        setupPwaManifest();
+        setupServiceWorkerSafe();
+        populateCategorySelects();
+        renderUnitQuickChips();
+        loadInitialLocalInventory();
+        bindEvents();
+        renderAll();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
